@@ -1,0 +1,195 @@
+<!doctype html>
+<html>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimal-ui">
+	<title>RealText - Realtime Texting</title>
+	<style>
+	@font-face {
+		src: url('http://localhost/~sankaul/helvetica3.ttf');
+		font-family: myFont;
+	}
+	body {
+		font-family: myFont;
+	}
+	#m {
+		display: none;
+		width:100%;
+		font-size: 1.5em;
+		bottom:0px;
+		color:purple;
+		outline-width: 0px;
+		box-shadow: 0 0 10px purple;
+		border: 1px solid purple;
+		padding-top:5px;
+		padding-bottom: 5px;
+		font-family: myFont;
+	}
+	#form {
+		position: fixed;
+		bottom:0px;
+		left:0px;
+		width:100%;
+		max-width: 100%;
+		text-align: center;
+	}
+	#userlist {
+		/*list-style-type: none;*/
+		width:100%;
+		/*background-color: green;*/
+		display: none;
+
+	}
+	#userlist li {
+		display: block;
+		color:purple;
+		border-top:1px solid purple;
+		border-bottom: 1px solid purple;
+		font-size: 1.5em;
+		padding: 30px;
+		/*background-color: skyblue;*/
+		text-align: center;
+	}
+	#toggler {
+		box-shadow: 0 0 10px purple;
+		/*border-radius: 10px;*/
+		padding: 10px;
+		font-size: 1.5em;
+		left:0px;
+		text-align: center;
+		position: absolute;
+		top:0px;
+		color:purple;
+		width:100%;
+		/*margin-bottom: 10px;*/
+	}
+	#msgprev {
+		color:gray;
+		font-size: 1.7em;
+		position: absolute;
+		top:13%;
+		height:23%;
+		left:5%;
+		padding-left: 5%;
+		max-height:23%;
+		left:0px;
+		width: 90%;
+		/*text-align: center;*/
+	}
+	#msgnow {
+		position: absolute;
+		top:38%;
+		left:5%;
+		width: 90%;
+		color:purple;
+		max-height: 50%;
+		height:50%;
+		font-size: 2em;
+	}
+	body {
+		overflow-x: hidden;
+	}
+	</style>
+</head>
+<body>
+	<div id="toggler">Online Users</div>
+<div id="msgprev"></div>
+<div id="msgnow">RealText - Realtime Texing<hr style="border-color: purple" />Developed by Mrinal Dhar</div>
+<form action="" id="form">
+	
+	<ul id="userlist">
+<li></li>
+</ul>
+<input id="m" autocomplete="off" placeholder="Say something..." />
+</form>
+
+
+
+
+
+
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="http://localhost/~sankaul/js/jquery.js"></script>
+<script>
+$('#toggler').click(function() {
+	$('#userlist').slideToggle();
+});
+var person={};
+var socket = io();
+$(document).ready(function() {
+	var me;
+		me = prompt("Please enter your name:", "");
+		person = {un: me};
+		socket.emit('add user', me);
+		});
+var tousr;
+
+$('#m').keyup(function() {
+		socket.emit('chatmsg', {to: tousr, msg: $('#m').val()});
+		
+		});
+$('form').submit(function () {
+		$('#m').val('');
+		socket.emit('chatsent', tousr);
+		return false;
+		});
+socket.on('chatmsg', function(data) {
+		if (data.from==tousr)
+		{
+		$('#msgnow').html(data.msg);
+	}
+		});
+socket.on('chatsent', function(msg) {
+		$('#msgprev').html($('#msgnow').html());
+		});
+socket.on('updatelist', function(users) {
+	// alert(users);
+	$('#userlist').html('');
+	$.each(users, function(index, value) {
+		if (value!=person.un)
+		{
+		$('#userlist').append($('<li id='+index+' onclick="changeusr(this.id)">').text(value));
+		}
+		if (value==person.un)
+		{
+			person.id = index;
+		}
+	});
+	// $('#userlist').html();
+		});
+socket.on('asktotalk', function(data) {
+	var whattodo = confirm(data.fname+' requests to talk to you. Would you like to proceed?');
+	if (whattodo==true)
+	{
+		tousr = data.fid;
+		initconvo();
+		socket.emit('perm_granted', {to: tousr, from: person.id});
+		$('#m').show();
+		$('#toggler').html(data.fname);
+	}
+	else {
+
+	}
+});
+socket.on('perm_granted', function(data) {
+$('#m').show();
+$('#toggler').html(data.fromname);
+});
+function changeusr(val)
+{
+	$('#userlist').slideUp();
+	if (tousr!=val)
+	{
+	tousr = val;
+	alert('Asking if they can talk right now...');
+	socket.emit('asktotalk', {from: person.id, to: val});
+}
+}
+function initconvo() {
+	$('#m').val('');
+	$('#msgnow').html('');
+	$('#msgprev').html('');
+}
+</script>
+</body>
+</html>
