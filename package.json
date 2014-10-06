@@ -1,9 +1,16 @@
 {
   "name": "realtext",
-  "version": "0.0.1",
+  "version": "0.0.1-6",
   "description": "Realtime Texting Application",
   "dependencies": {
     "express": "^4.4.5",
     "socket.io": "^1.0.6"
+  },
+  "subdomain": "rtext",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": "0.10.x"
   }
 }
